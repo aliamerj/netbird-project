@@ -12,12 +12,23 @@ Implement a Taildrop-like file transfer feature for NetBird, we need to create a
 In this first step, I’ll implement the core logic for peer-to-peer file transfer inside the NetBird agent — following a model similar to SSH’s controlled file copy behavior.
 
 ### 🧩 What I’ll Do
-- **File Transfer Listener (Opt-In)**
-   - Add a new CLI/config flag (e.g., `--file-transfer`) to enable an agent-side listener that waits for incoming file transfer requests.
-   - Can run persistently or be started on-demand via internal signal.
+- **Introduce a new management-side config flag (e.g., enableFileTransfer: true)**
+   - that governs whether the agent is allowed to participate in file transfer at all.
+   - This is synced to the agent and acts as a hard gatekeeper
+If disabled, the feature is entirely inactive regardless of CLI flags or user actions
+
+- **Local Listener with Optional Runtime Signal**
+  Once management has enabled it, the agent can start a local listener for file transfer requests:
+   - Either automatically on startup (based on CLI/config flag like` --file-transfer`)
+   - Or dynamically triggered at runtime via a dedicated internal signal message (e.g., `start_file_transfer_listener`)
 
 
-- **Protobuf-Based Control Messages** (used in peer-to-peer communication) to support new message types for file transfer: `file-offer`,`file_accept`,`file_deny`, `file_meta` and `file_chunk`.
+- **Protobuf-Based Control Messages** (used in peer-to-peer communication) to support new message types for file transfer:
+  - `file_offer` → initiate
+  - `file_accept` / `file_deny`
+  - `file_meta` → metadata (size, name)
+  - `file_chunk` → actual data
+  - `transfer_complete` / `transfer_error`
 
 - **User Authorization Flow** — When someone tries to send a file:
    - Receiver gets a request with file metadata (size, name, sender)
@@ -38,8 +49,8 @@ In this first step, I’ll implement the core logic for peer-to-peer file transf
 ```bash
 netbird send <file-path> <peer-id>
 ```
-   - Uses internal messaging and existing peer connections
-   - Will print file transfer status to terminal
+   - Works only if both peers are management-enabled and listening
+   - Prints real-time status in teminal 
 
 ## TASK 2: Cross-Platform File Sharing UX Integration
 Now that we have the internal file transfer logic working (from Task 1), this task focuses on making it usable and accessible across major platforms by integrating with native OS interfaces.
