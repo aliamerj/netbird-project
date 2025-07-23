@@ -1,4 +1,3 @@
-# Sharing files with netbird 
 Implement a Taildrop-like file transfer feature for NetBird, we need to create a secure, peer-to-peer file-sharing system that integrates naturally into NetBird’s infrastructure allowing users to send files between their personal devices on a Netbird network.
 
 ## Overall Implementation Core Logic: 
@@ -6,16 +5,20 @@ Implement a Taildrop-like file transfer feature for NetBird, we need to create a
 -  **Platform-Specific Code**:
     - **macOS/iOS/Android**: Integrate with the share menu (e.g., “Share via NetBird”).
     - **Windows**: Add to the share context menu or NetBird client interface.
-    - **Linux**: Develop a command (e.g., `netbird send <file> <device>`)
+    - **Linux**: Develop a command (e.g., `netbird send <file> <device/ peer-id>`)
 
 ## TASK 1: File Transfer Activation, Permissions, and Default Save Path
 In this first step, I’ll implement the core logic for peer-to-peer file transfer inside the NetBird agent — following a model similar to SSH’s controlled file copy behavior.
 
 ### 🧩 What I’ll Do
-- **Introduce a new management-side config flag (e.g., enableFileTransfer: true)**
+- **Introduce a new management-side config flag (e.g., `enableFileTransfer: true`)**
    - that governs whether the agent is allowed to participate in file transfer at all.
    - This is synced to the agent and acts as a hard gatekeeper
 If disabled, the feature is entirely inactive regardless of CLI flags or user actions
+
+ - Agent Startup Check:
+   - On startup, the NetBird agent checks the management config for the `EnableFileTransfer flag`.
+   - If disabled, the feature remains entirely off — no listeners, no UI, no CLI options exposed.
 
 - **Local Listener with Optional Runtime Signal**
   Once management has enabled it, the agent can start a local listener for file transfer requests:
@@ -74,5 +77,5 @@ Now that we have the internal file transfer logic working (from Task 1), this ta
 - UI or shell integrations simply act as wrappers around the core agent, either invoking a CLI command or talking directly to the local NetBird service (via Unix socket or similar, if exposed).
 
 ## TASK 3: Nice to have
-- Add optional settings like download location, transfer history, and permissions.
+- Add optional settings like transfer history, and permissions.
 - Notify users when a new file is received.
